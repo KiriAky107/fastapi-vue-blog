@@ -1,0 +1,29 @@
+﻿
+# Web 框架 
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+
+# 数据库与异步 ORM
+tortoise-orm==0.20.0
+aerich==0.7.2              # 数据库迁移工具
+asyncpg==0.29.0            # PostgreSQL 驱动
+aioredis==2.0.1            # Redis 驱动 (用于缓存访问量)
+
+# 日志系统
+loguru==0.7.2              # 极简且强大的异步日志处理
+
+# 配置与安全
+pydantic[email]==2.6.3      # 包含 Email 校验
+pydantic-settings==2.2.1   # 处理 .env 环境变量
+python-jose[cryptography]==3.3.0  # JWT
+passlib[bcrypt]==1.7.4      # 密码哈希
+
+# 业务
+python-multipart==0.0.9     # 处理表单与文件上传
+mistune==3.0.2              # 快速 Markdown 解析
+pillow==10.2.0              # 处理图片 (ACG 博客需要自动缩略图)
+httpx==0.27.0               # 异步 HTTP 请求 (爬取番剧信息等)
+
+# 开发与部署
+python-dotenv==1.0.1
+gunicorn==21.2.0           # 生产环境容器部署使用
