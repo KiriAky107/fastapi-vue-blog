@@ -1,0 +1,12 @@
+/.idea/
+/.vscode/
+/.claude/
+/backend/venv/
+
+/frontend/build/
+/frontend/node_modules/
+/frontend/package-lock.json
+/frontend/.vscode/
+/frontend/.idea/
+/开发路径.md
+
