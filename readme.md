@@ -5,7 +5,7 @@
 - **项目名称**：ACG Blog（二次元风格博客）
 - **项目简介**：基于 **FastAPI** 与 **Vue 3** 的前后端分离博客系统，主打二次元视觉体验与高性能响应。支持 Markdown 文章发布、动态看板娘、访问量统计、热搜排行、深色模式切换等特色功能。
 - **技术栈概览**：
-  - 后端：Python + FastAPI + PostgreSQL + Tortoise‑ORM + Redis + JWT
+  - 后端：Python + FastAPI + SupaBase + Tortoise‑ORM + Redis + JWT
   - 前端：Vue 3 (Vite) + Pinia + Naive UI + Tailwind CSS + GSAP
 - **系统架构**：**B/S 架构**（Browser/Server，浏览器/服务器架构）
   - 前端：单页应用（SPA）运行于浏览器
@@ -28,7 +28,7 @@
 | **模块**       | **技术选型**          | **说明**                                                     |
 | -------------- | --------------------- | ------------------------------------------------------------ |
 | **核心框架**   | **FastAPI**           | 高性能、原生异步（Async），满足二次元素材（图片/视频）的高并发加载需求。 |
-| **数据库**     | **PostgreSQL**        | 关系型数据库首选，对 JSONB 的支持非常适合存储灵活的文章元数据。 |
+| **数据库**     | **SupaBace**          | **内置 Auth**，支持第三方登录 (Github/Google)                |
 | **ORM (异步)** | **Tortoise-ORM**      | 语法类似 Django，且原生支持异步操作。                        |
 | **缓存/任务**  | **Redis**             | 用于文章点击量统计、热搜排行以及 Session 存储。              |
 | **认证**       | **JWT (python-jose)** | 无状态认证，方便前后端分离部署。                             |
@@ -99,7 +99,7 @@ uvicorn[standard]==0.27.1
 tortoise-orm==0.20.0
 aerich==0.7.2              # 数据库迁移工具
 asyncpg==0.29.0            # PostgreSQL 驱动
-aioredis==2.0.1            # Redis 驱动 (用于缓存访问量)
+aioredis==2.0.1            # Redis 驱动 
 
 # 日志系统
 loguru==0.7.2              # 极简且强大的异步日志处理
@@ -113,8 +113,8 @@ passlib[bcrypt]==1.7.4      # 密码哈希
 # 业务
 python-multipart==0.0.9     # 处理表单与文件上传
 mistune==3.0.2              # 快速 Markdown 解析
-pillow==10.2.0              # 处理图片 (ACG 博客需要自动缩略图)
-httpx==0.27.0               # 异步 HTTP 请求 (爬取番剧信息等)
+pillow==10.2.0              # 处理图片 
+httpx==0.27.0               # 异步 HTTP 请求 
 
 # 开发与部署
 python-dotenv==1.0.1
