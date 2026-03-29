@@ -1,15 +1,32 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '@/store/user'
+import { useMessage } from 'naive-ui'
 
 const router = useRouter()
+const userStore = useUserStore()
+const message = useMessage()
 const email = ref('')
 const password = ref('')
+const loading = ref(false)
 
 async function handleLogin() {
-  // TODO: 实现登录逻辑
-  console.log('Login:', email.value, password.value)
-  router.push('/')
+  if (!email.value || !password.value) {
+    message.warning('请填写邮箱和密码')
+    return
+  }
+
+  loading.value = true
+  try {
+    await userStore.login(email.value, password.value)
+    message.success('登录成功')
+    router.push('/')
+  } catch (error: any) {
+    message.error(error.response?.data?.message || '登录失败，请检查邮箱和密码')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -41,8 +58,8 @@ async function handleLogin() {
           />
         </div>
 
-        <button type="submit" class="w-full btn-acg">
-          登录
+        <button type="submit" class="w-full btn-acg" :disabled="loading">
+          {{ loading ? '登录中...' : '登录' }}
         </button>
       </form>
 

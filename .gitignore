@@ -9,4 +9,8 @@
 /frontend/.vscode/
 /frontend/.idea/
 /开发路径.md
+**/__pycache__/
+**/*.pyc
+**/logs/
+**/logs/*.log
 

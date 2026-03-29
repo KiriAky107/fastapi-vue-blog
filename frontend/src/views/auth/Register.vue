@@ -1,16 +1,41 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { authApi } from '@/api/auth'
+import { useMessage } from 'naive-ui'
 
 const router = useRouter()
+const message = useMessage()
 const username = ref('')
 const email = ref('')
 const password = ref('')
+const loading = ref(false)
 
 async function handleRegister() {
-  // TODO: 实现注册逻辑
-  console.log('Register:', username.value, email.value, password.value)
-  router.push('/login')
+  if (!username.value || !email.value || !password.value) {
+    message.warning('请填写所有字段')
+    return
+  }
+
+  if (password.value.length < 6) {
+    message.warning('密码长度至少为6位')
+    return
+  }
+
+  loading.value = true
+  try {
+    await authApi.register({
+      username: username.value,
+      email: email.value,
+      password: password.value,
+    })
+    message.success('注册成功，请登录')
+    router.push('/login')
+  } catch (error: any) {
+    message.error(error.response?.data?.message || '注册失败')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -53,8 +78,8 @@ async function handleRegister() {
           />
         </div>
 
-        <button type="submit" class="w-full btn-acg">
-          注册
+        <button type="submit" class="w-full btn-acg" :disabled="loading">
+          {{ loading ? '注册中...' : '注册' }}
         </button>
       </form>
 

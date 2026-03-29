@@ -1,28 +1,107 @@
 <script setup lang="ts">
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
+import { authApi } from '@/api/auth'
+import { useMessage, useDialog } from 'naive-ui'
+import Navbar from '@/components/Navbar.vue'
+import Footer from '@/components/Footer.vue'
 
+const router = useRouter()
 const userStore = useUserStore()
+const message = useMessage()
+const dialog = useDialog()
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+async function handleLogout() {
+  try {
+    await dialog.confirm({
+      title: '提示',
+      content: '确定要退出登录吗？',
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+    })
+    await authApi.logout()
+  } catch {
+    // 用户取消
+  }
+  userStore.logout()
+  message.success('已退出登录')
+  router.push('/')
+}
+
+onMounted(() => {
+  if (!userStore.isLoggedIn) {
+    message.warning('请先登录')
+    router.push('/login')
+  }
+})
 </script>
 
 <template>
-  <div class="profile">
-    <nav class="glass fixed top-0 left-0 right-0 z-50">
-      <div class="max-w-4xl mx-auto px-4 py-4">
-        <RouterLink to="/" class="text-acg-pink hover:underline">← 返回首页</RouterLink>
-      </div>
-    </nav>
+  <div class="profile min-h-screen">
+    <Navbar />
 
-    <main class="pt-20 px-4 max-w-4xl mx-auto">
-      <div class="glass rounded-xl p-8">
-        <h1 class="text-2xl font-bold mb-4">个人中心</h1>
-        <div v-if="userStore.user">
-          <p>用户名: {{ userStore.user.username }}</p>
-          <p>邮箱: {{ userStore.user.email }}</p>
+    <main class="pt-24 px-4 pb-12 max-w-2xl mx-auto">
+      <div class="glass rounded-xl p-6 md:p-8">
+        <h1 class="text-2xl font-bold mb-6">个人中心</h1>
+
+        <div v-if="userStore.user" class="space-y-6">
+          <!-- 头像和基本信息 -->
+          <div class="flex items-center gap-6">
+            <div class="w-20 h-20 rounded-full overflow-hidden bg-acg-pink/20 flex items-center justify-center">
+              <img
+                v-if="userStore.user.avatar"
+                :src="userStore.user.avatar"
+                :alt="userStore.user.username"
+                class="w-full h-full object-cover"
+              />
+              <span v-else class="text-3xl text-acg-pink">{{ userStore.user.username[0].toUpperCase() }}</span>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold">{{ userStore.user.username }}</h2>
+              <p class="text-gray-500 text-sm">加入于 {{ formatDate(userStore.user.created_at) }}</p>
+            </div>
+          </div>
+
+          <!-- 详细信息 -->
+          <div class="space-y-4 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between">
+              <span class="text-gray-500">邮箱</span>
+              <span>{{ userStore.user.email }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500">状态</span>
+              <span :class="userStore.user.is_active ? 'text-green-500' : 'text-gray-400'">
+                {{ userStore.user.is_active ? '已激活' : '未激活' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="flex gap-4 pt-4">
+            <button
+              @click="handleLogout"
+              class="px-6 py-2 rounded-lg bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors"
+            >
+              退出登录
+            </button>
+          </div>
         </div>
-        <div v-else>
+
+        <div v-else class="text-center text-gray-500 py-8">
           加载中...
         </div>
       </div>
     </main>
+
+    <Footer />
   </div>
 </template>
