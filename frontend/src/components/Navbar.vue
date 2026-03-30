@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { useThemeStore } from '@/store/theme'
 import { useUserStore } from '@/store/user'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
+import { computed } from 'vue'
 
 const themeStore = useThemeStore()
 const userStore = useUserStore()
+const route = useRoute()
+
+const isAdmin = computed(() => route.path.startsWith('/admin'))
 </script>
 
 <template>
-  <nav class="navbar">
+  <nav v-if="!isAdmin" class="navbar">
     <div class="nav-container">
       <!-- Logo -->
       <RouterLink to="/" class="logo">
@@ -18,24 +22,23 @@ const userStore = useUserStore()
 
       <!-- 导航链接 -->
       <div class="nav-links">
-        <RouterLink to="/" class="nav-link">首页</RouterLink>
-        <RouterLink to="/category" class="nav-link">分类</RouterLink>
-        <RouterLink to="/archive" class="nav-link">归档</RouterLink>
-        <RouterLink to="/about" class="nav-link">关于</RouterLink>
+        <RouterLink to="/" class="nav-link" exact-active-class="active">首页</RouterLink>
+        <RouterLink to="/category" class="nav-link" active-class="active">分类</RouterLink>
+        <RouterLink to="/about" class="nav-link" active-class="active">关于</RouterLink>
       </div>
 
       <!-- 右侧操作区 -->
       <div class="nav-actions">
         <!-- 主题切换 -->
-        <button @click="themeStore.toggleTheme()" class="action-btn">
-          {{ themeStore.theme === 'light' ? '☀️' : themeStore.theme === 'dark' ? '🌙' : '🌗' }}
+        <button @click="themeStore.toggleTheme()" class="action-btn" :title="themeStore.theme === 'light' ? '切换深色模式' : '切换浅色模式'">
+          <span class="text-lg">{{ themeStore.theme === 'light' ? '🌙' : '☀️' }}</span>
         </button>
 
         <!-- 登录按钮 -->
         <RouterLink v-if="!userStore.isLoggedIn" to="/login" class="login-btn">
           登录
         </RouterLink>
-        <RouterLink v-else to="/profile" class="user-avatar">
+        <RouterLink v-else to="/profile" class="user-avatar" :title="userStore.user?.username">
           {{ userStore.user?.username?.[0]?.toUpperCase() || 'U' }}
         </RouterLink>
       </div>
@@ -50,19 +53,19 @@ const userStore = useUserStore()
   left: 0;
   right: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.3);
 }
 :global(.dark) .navbar {
-  background: rgba(17, 24, 39, 0.85);
-  border-bottom-color: rgba(75, 85, 99, 0.5);
+  background: rgba(17, 24, 39, 0.8);
+  border-bottom-color: rgba(75, 85, 99, 0.3);
 }
 
 .nav-container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 1.5rem;
   height: 4rem;
   display: flex;
   align-items: center;
@@ -77,9 +80,9 @@ const userStore = useUserStore()
 }
 
 .logo-icon {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.625rem;
   background: linear-gradient(135deg, #FFB7C5, #D4B5E6);
   display: flex;
   align-items: center;
@@ -87,6 +90,7 @@ const userStore = useUserStore()
   color: white;
   font-weight: bold;
   font-size: 1.125rem;
+  box-shadow: 0 2px 10px rgba(255, 183, 197, 0.3);
 }
 
 .logo-text {
@@ -100,7 +104,7 @@ const userStore = useUserStore()
 
 .nav-links {
   display: none;
-  gap: 1.5rem;
+  gap: 0.5rem;
 }
 @media (min-width: 768px) {
   .nav-links {
@@ -110,18 +114,24 @@ const userStore = useUserStore()
 
 .nav-link {
   position: relative;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
   color: #6B7280;
   text-decoration: none;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 500;
-  transition: color 0.2s;
+  transition: all 0.2s;
 }
 :global(.dark) .nav-link {
   color: #9CA3AF;
 }
-.nav-link:hover,
-.nav-link.router-link-active {
+.nav-link:hover {
   color: #FFB7C5;
+  background: rgba(255, 183, 197, 0.1);
+}
+.nav-link.active {
+  color: #FFB7C5;
+  background: rgba(255, 183, 197, 0.15);
 }
 
 .nav-actions {
@@ -131,9 +141,9 @@ const userStore = useUserStore()
 }
 
 .action-btn {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 9999px;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -146,27 +156,29 @@ const userStore = useUserStore()
   background: #374151;
 }
 .action-btn:hover {
-  background: #FFB7C5;
+  background: rgba(255, 183, 197, 0.3);
+  transform: scale(1.05);
 }
 
 .login-btn {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.25rem;
   border-radius: 9999px;
-  border: 2px solid #FFB7C5;
-  color: #FFB7C5;
+  background: linear-gradient(135deg, #FFB7C5, #D4B5E6);
+  color: white;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   transition: all 0.2s;
+  box-shadow: 0 2px 10px rgba(255, 183, 197, 0.3);
 }
 .login-btn:hover {
-  background: #FFB7C5;
-  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(255, 183, 197, 0.5);
 }
 
 .user-avatar {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border-radius: 9999px;
   background: linear-gradient(135deg, #FFB7C5, #D4B5E6);
   display: flex;
@@ -175,5 +187,11 @@ const userStore = useUserStore()
   color: white;
   font-weight: 600;
   text-decoration: none;
+  box-shadow: 0 2px 10px rgba(255, 183, 197, 0.3);
+  transition: all 0.2s;
+}
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(255, 183, 197, 0.5);
 }
 </style>

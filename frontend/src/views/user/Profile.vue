@@ -22,15 +22,16 @@ function formatDate(dateStr: string) {
 
 async function handleLogout() {
   try {
-    await dialog.confirm({
+    await dialog.warning({
       title: '提示',
       content: '确定要退出登录吗？',
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      positiveText: '确定',
+      negativeText: '取消',
     })
     await authApi.logout()
   } catch {
     // 用户取消
+    return
   }
   userStore.logout()
   message.success('已退出登录')
