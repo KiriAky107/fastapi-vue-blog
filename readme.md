@@ -1,124 +1,189 @@
-# 二次元风格博客技术文档
-打算自己写个博客博客项目练练手，并把原来博客的东西都搬过去，先把仓库和前端写了
+# ACG Blog - 二次元风格博客系统
 
-### 项目基本信息
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11+-blue.svg" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-0.110-green.svg" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Vue-3.5-brightgreen.svg" alt="Vue">
+  <img src="https://img.shields.io/badge/TypeScript-5.9-blue.svg" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Docker-Ready-blue.svg" alt="Docker">
+</p>
 
-- **项目名称**：ACG Blog（二次元风格博客）
-- **项目简介**：基于 **FastAPI** 与 **Vue 3** 的前后端分离博客系统，主打二次元视觉体验与高性能响应。支持 Markdown 文章发布、动态看板娘、访问量统计、热搜排行、深色模式切换等特色功能。
-- **技术栈概览**：
-  - 后端：Python + FastAPI + SupaBase + Tortoise‑ORM + Redis + JWT
-  - 前端：Vue 3 (Vite) + Pinia + Naive UI + Tailwind CSS + GSAP
-- **系统架构**：**B/S 架构**（Browser/Server，浏览器/服务器架构）
-  - 前端：单页应用（SPA）运行于浏览器
-  - 后端：RESTful API 服务器
-  - 通信协议：HTTP/HTTPS + JSON
-- **后端架构模式**：**类 MVC 模式**
-  - **Model（模型层）**：`models/` 目录，Tortoise-ORM 数据模型定义
-  - **View（视图层）**：`api/endpoints/` 目录，FastAPI 路由返回 JSON 响应
-  - **Controller（控制器层）**：`api/endpoints/` 中的路由处理函数，协调业务逻辑
-  - **Service（服务层）**：`services/` 目录，封装核心业务（如看板娘互动、统计逻辑）
-  - **Schema（数据传输层）**：`schemas/` 目录，Pydantic 模型校验请求与响应
-  - **CRUD（数据操作层）**：`crud/` 目录，封装数据库增删改查逻辑，辅助 Model 层
-  - **Core（核心配置）**：`core/` 目录，管理环境变量、日志、JWT 安全等基础设施
-- **开发状态**：规划中
+基于 **FastAPI** 与 **Vue 3** 的前后端分离博客系统，主打二次元视觉体验与高性能响应。支持 Markdown 文章发布、访问量统计、分类标签管理、深色模式切换等功能。
 
-> 详细技术选型及项目结构请参见下文。
+## 技术栈
 
-### 后端技术栈
+### 后端
+| 技术 | 说明 |
+|------|------|
+| FastAPI | 高性能异步 Web 框架 |
+| Tortoise-ORM | 异步 ORM，支持 PostgreSQL |
+| PostgreSQL | 关系型数据库 |
+| Redis | 缓存与会话存储 |
+| JWT | 无状态身份认证 |
+| Pydantic | 数据验证 |
+| Loguru | 日志处理 |
 
-| **模块**       | **技术选型**          | **说明**                                                     |
-| -------------- | --------------------- | ------------------------------------------------------------ |
-| **核心框架**   | **FastAPI**           | 高性能、原生异步（Async），满足二次元素材（图片/视频）的高并发加载需求。 |
-| **数据库**     | **SupaBace**          | **内置 Auth**，支持第三方登录 (Github/Google)                |
-| **ORM (异步)** | **Tortoise-ORM**      | 语法类似 Django，且原生支持异步操作。                        |
-| **缓存/任务**  | **Redis**             | 用于文章点击量统计、热搜排行以及 Session 存储。              |
-| **认证**       | **JWT (python-jose)** | 无状态认证，方便前后端分离部署。                             |
-| **数据校验**   | **Pydantic v2**       | 确保前端传来的数据不会让后端“炸掉”。                         |
-| **日志**       | **Loguru**            | 极简且强大的异步日志处理，便于排错                           |
+### 前端
+| 技术 | 说明 |
+|------|------|
+| Vue 3 | 组合式 API (Script Setup) |
+| Vite | 快速构建工具 |
+| TypeScript | 类型安全 |
+| Pinia | 状态管理 |
+| Naive UI | UI 组件库 |
+| Tailwind CSS | 样式引擎 |
+| Axios | HTTP 客户端 |
 
-###  前端技术栈 (The Visuals)
+## 项目结构
 
-| **模块**      | **技术选型**     | **说明**                                                     |
-| ------------- | ---------------- | ------------------------------------------------------------ |
-| **框架**      | **Vue 3 (Vite)** | 组合式 API (Script Setup) 开发体验极佳，构建速度快。         |
-| **状态管理**  | **Pinia**        | 轻量、简洁，存储用户偏好（如：深色/浅色模式、看板娘状态）。  |
-| **UI 组件库** | **Naive UI**     | 设计感极强，配置主题非常自由，适合定制二次元配色。           |
-| **样式引擎**  | **Tailwind CSS** | 极其方便编写自定义 UI。你可以轻松实现“毛玻璃”、“卡片悬浮”等特效。 |
-| **编辑器**    | **V-MD-Editor**  | 基于 Vue 3 的 Markdown 编辑器，支持预览、代码高亮和 LaTeX 公式。 |
-| **动画库**    | **GSAP**         | 强大的动效库。二次元风格需要细腻的入场和交互动画。           |
-
-### 预计项目结构
-
-```bash
-acg-blog/
-├── backend/                # FastAPI 后端项目
+```
+├── backend/                    # FastAPI 后端
 │   ├── app/
-│   │   ├── api/            # 接口层 (v1, v2...)
-│   │   │   ├── endpoints/  # 具体业务接口 (posts.py, users.py, etc.)
-│   │   │   └── api.py      # 路由汇总
-│   │   ├── core/           # 核心配置
-│   │   │   ├── config.py   # 环境变量与全局配置
-│   │   │   ├── logger.py   # 日志拦截与配置
-│   │   │   └── security.py # JWT 与权限相关
-│   │   ├── crud/           # 数据库增删改查逻辑
-│   │   ├── db/             # 数据库连接与初始化
-│   │   ├── models/         # Tortoise-ORM 数据库模型
-│   │   ├── schemas/        # Pydantic 数据验证模型
-│   │   ├── services/       # 业务服务逻辑 (如：看板娘互动 API)
-│   │   └── main.py         # 后端入口
-│   ├── logs/               # 日志存储目录 (自动生成 .log 文件)
-│   ├── static/             # 静态资源 (用户上传的插图、头像)
-│   ├── tests/              # 测试用例
-│   ├── .env                # 敏感配置文件
-│   ├── pyproject.toml      # Poetry 配置或使用 requirements
-│   └── requirements.txt    # 依赖清单
-├── frontend/               # Vue 3 前端项目 (Vite)
-│   ├── public/             # 公共静态资源 (Live2D 模型、Favicon)
+│   │   ├── api/endpoints/    # API 端点 (auth, posts, comments, users)
+│   │   ├── core/             # 核心配置 (config, security, database, logger)
+│   │   ├── crud/             # 数据库增删改查
+│   │   ├── models/           # Tortoise-ORM 数据模型
+│   │   ├── schemas/          # Pydantic 数据验证模型
+│   │   └── main.py           # 应用入口
+│   ├── Dockerfile             # 后端容器配置
+│   ├── schema.sql             # 数据库建表脚本
+│   └── requirements.txt       # Python 依赖
+│
+├── frontend/                   # Vue 3 前端
 │   ├── src/
-│   │   ├── api/            # Axios 接口封装
-│   │   ├── assets/         # 样式、二次元字体、插画
-│   │   ├── components/     # 组件 (看板娘、播放器、卡片)
-│   │   ├── router/         # 路由配置
-│   │   ├── store/          # Pinia 状态管理
-│   │   ├── views/          # 页面布局 (首页、文章页、归档)
-│   │   ├── App.vue         # 根组件
-│   │   └── main.ts         # 前端入口
-│   ├── tailwind.config.js  # Tailwind CSS 配置
-│   └── package.json        # 前端依赖
-├── docker-compose.yml      # 全栈 Docker 编排
-└── README.md
+│   │   ├── api/              # Axios 接口封装
+│   │   ├── components/      # 公共组件
+│   │   ├── views/           # 页面视图
+│   │   ├── store/           # Pinia 状态管理
+│   │   ├── router/          # 路由配置
+│   │   └── types/           # TypeScript 类型定义
+│   ├── Dockerfile            # 前端容器配置
+│   └── nginx.conf            # Nginx 配置
+│
+├── docker-compose.yml        # Docker 编排
+├── schema.sql                # 数据库建表脚本
+└── docker-deploy.md          # 部署文档
 ```
 
-### 后端requirements
+## 快速开始
+
+### 环境要求
+- Python 3.11+
+- Node.js 18+
+- PostgreSQL 14+
+- Redis 7+ (可选)
+
+### 本地开发
+
+**1. 克隆项目**
+```bash
+git clone <repository-url>
+cd acg-blog
+```
+
+**2. 启动后端**
+```bash
+cd backend
+
+# 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# 或 venv\Scripts\activate  # Windows
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 配置环境变量
+cp .env.example .env  # 修改数据库连接信息
+
+# 初始化数据库 (确保 PostgreSQL 运行中)
+psql -U postgres -c "CREATE DATABASE acg_blog;"
+psql -U postgres -d acg_blog -f schema.sql
+
+# 启动服务
+uvicorn main:app --reload --port 8000
+```
+
+**3. 启动前端**
+```bash
+cd frontend
+
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+```
+
+**4. 访问应用**
+- 前端: http://localhost:5173
+- 后端 API: http://localhost:8000
+- API 文档: http://localhost:8000/docs
+
+### Docker 部署
 
 ```bash
-# Web 框架 
-fastapi==0.110.0
-uvicorn[standard]==0.27.1
+# 启动所有服务
+docker-compose up -d
 
-# 数据库与异步 ORM
-tortoise-orm==0.20.0
-aerich==0.7.2              # 数据库迁移工具
-asyncpg==0.29.0            # PostgreSQL 驱动
-aioredis==2.0.1            # Redis 驱动 
-
-# 日志系统
-loguru==0.7.2              # 极简且强大的异步日志处理
-
-# 配置与安全
-pydantic[email]==2.6.3      # 包含 Email 校验
-pydantic-settings==2.2.1   # 处理 .env 环境变量
-python-jose[cryptography]==3.3.0  # JWT
-passlib[bcrypt]==1.7.4      # 密码哈希
-
-# 业务
-python-multipart==0.0.9     # 处理表单与文件上传
-mistune==3.0.2              # 快速 Markdown 解析
-pillow==10.2.0              # 处理图片 
-httpx==0.27.0               # 异步 HTTP 请求 
-
-# 开发与部署
-python-dotenv==1.0.1
-gunicorn==21.2.0           # 生产环境容器部署使用
+# 查看服务状态
+docker-compose ps
 ```
 
+访问 http://localhost 即可使用。
+
+## API 接口
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | /api/v1/auth/register | 用户注册 |
+| POST | /api/v1/auth/login | 用户登录 |
+| POST | /api/v1/auth/refresh | 刷新 Token |
+| GET | /api/v1/auth/me | 获取当前用户 |
+| GET | /api/v1/posts | 获取文章列表 |
+| GET | /api/v1/posts/{id} | 获取文章详情 |
+| POST | /api/v1/posts | 创建文章 |
+| PUT | /api/v1/posts/{id} | 更新文章 |
+| DELETE | /api/v1/posts/{id} | 删除文章 |
+| GET | /api/v1/categories | 获取分类列表 |
+| GET | /api/v1/tags | 获取标签列表 |
+| GET | /api/v1/comments/post/{id} | 获取文章评论 |
+
+## 默认账户
+
+- 用户名: `admin`
+- 邮箱: `admin@acgblog.com`
+- 密码: `admin123`
+
+**请在部署后立即修改管理员密码！**
+
+## 功能特性
+
+- [x] 用户认证 (JWT)
+- [x] 文章管理 (CRUD)
+- [x] 分类与标签
+- [x] Markdown 编辑器
+- [x] 评论系统
+- [x] 浏览量统计
+- [x] 深色/浅色模式
+- [x] 响应式设计
+- [x] Docker 部署
+
+## 开发说明
+
+### 前端组件
+- `Navbar.vue` - 顶部导航栏
+- `Hero.vue` - 首页横幅
+- `PostCard.vue` - 文章卡片
+- `Sidebar.vue` - 侧边栏
+- `Footer.vue` - 页脚
+
+### 管理后台
+- `/admin/dashboard` - 仪表盘
+- `/admin/posts` - 文章管理
+- `/admin/categories` - 分类管理
+- `/admin/tags` - 标签管理
+
+## License
+
+MIT License
