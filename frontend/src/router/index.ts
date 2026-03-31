@@ -83,17 +83,37 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStore()
   const token = localStorage.getItem('access_token')
 
+  // 需要登录但未登录
   if (to.meta.requiresAuth && !token) {
     next({ name: 'Login' })
-  } else if (to.meta.requiresAdmin && userStore.user?.is_active !== true) {
-    next({ name: 'Home' })
-  } else {
-    next()
+    return
   }
+
+  // 需要管理员权限但不是管理员
+  if (to.meta.requiresAdmin) {
+    // 如果还没有用户信息，先获取
+    if (!userStore.user && token) {
+      try {
+        await userStore.fetchUser()
+      } catch {
+        // 获取失败，清除 token
+        userStore.logout()
+        next({ name: 'Login' })
+        return
+      }
+    }
+
+    if (!userStore.user?.is_superuser) {
+      next({ name: 'Home' })
+      return
+    }
+  }
+
+  next()
 })
 
 export default router

@@ -1,5 +1,4 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
-import type { ApiResponse } from '@/types'
+import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios'
 
 // 创建 axios 实例
 const request: AxiosInstance = axios.create({
@@ -27,20 +26,22 @@ request.interceptors.request.use(
 
 // 响应拦截器
 request.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
-    return response
+  (response) => {
+    // 成功时返回 response.data（即 ApiResponse）
+    return response.data
   },
   (error: any) => {
     if (error.response) {
-      const { status } = error.response
+      const { status, data } = error.response
 
-      // 401 未授权，跳转登录页
+      // 401 未授权，清除 token
       if (status === 401) {
         localStorage.removeItem('access_token')
         window.location.href = '/login'
       }
 
-      return Promise.reject(error.response.data)
+      // 返回错误信息
+      return Promise.reject(data)
     }
 
     return Promise.reject(error)
@@ -48,21 +49,22 @@ request.interceptors.response.use(
 )
 
 // 封装请求方法
+// 返回 Promise<ApiResponse<T>>，调用者通过 .data 访问实际数据
 export const http = {
-  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return request.get(url, config)
+  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<{ code: number; message: string; data: T }> {
+    return request.get(url, config).then(res => res.data)
   },
 
-  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return request.post(url, data, config)
+  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<{ code: number; message: string; data: T }> {
+    return request.post(url, data, config).then(res => res.data)
   },
 
-  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return request.put(url, data, config)
+  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<{ code: number; message: string; data: T }> {
+    return request.put(url, data, config).then(res => res.data)
   },
 
-  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return request.delete(url, config)
+  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<{ code: number; message: string; data: T }> {
+    return request.delete(url, config).then(res => res.data)
   },
 }
 

@@ -1,26 +1,34 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import { categoryApi } from '@/api/category'
+import { postApi } from '@/api/post'
+import type { Category, Post } from '@/types'
 
-const categories = ref([
-  { id: '1', name: '动漫资讯', slug: 'anime', post_count: 12 },
-  { id: '2', name: '游戏攻略', slug: 'game', post_count: 8 },
-  { id: '3', name: '二次元美图', slug: 'pictures', post_count: 25 },
-  { id: '4', name: '同人创作', slug: 'fanwork', post_count: 15 },
-])
+const categories = ref<Category[]>([])
+const tags = ref<string[]>(['原神', '崩坏星穹铁道', '我的世界', 'EVA', '约定的梦幻岛', '咒术回战', 'Cosplay', '手办'])
+const hotPosts = ref<Post[]>([])
 
-const tags = ref([
-  '原神', '崩坏星穹铁道', '我的世界', 'EVA',
-  '约定的梦幻岛', '咒术回战', 'Cosplay', '手办'
-])
+async function fetchSidebarData() {
+  try {
+    // 获取分类
+    const catResponse = await categoryApi.getAll()
+    categories.value = catResponse.data
 
-const hotPosts = ref([
-  { id: '1', title: '《原神》4.2版本前瞻：芙宁娜技能演示', view_count: 5200 },
-  { id: '2', title: '2024年必追的10部春季新番', view_count: 3800 },
-  { id: '3', title: '《崩坏星穹铁道》角色强度榜更新', view_count: 2900 },
-  { id: '4', title: '二次元手游开服大横评', view_count: 2100 },
-  { id: '5', title: '手办入坑指南：从萌新到进阶', view_count: 1800 },
-])
+    // 获取热门文章
+    const postsResponse = await postApi.getList({ page: 1, page_size: 10 })
+    hotPosts.value = postsResponse.data.items
+      .filter((p: Post) => p.status === 'published')
+      .sort((a: Post, b: Post) => b.view_count - a.view_count)
+      .slice(0, 5)
+  } catch (error) {
+    console.error('Failed to fetch sidebar data:', error)
+  }
+}
+
+onMounted(() => {
+  fetchSidebarData()
+})
 </script>
 
 <template>
@@ -53,9 +61,8 @@ const hotPosts = ref([
       <h3 class="sidebar-title">分类</h3>
       <ul class="category-list">
         <li v-for="cat in categories" :key="cat.id">
-          <RouterLink :to="`/category/${cat.slug}`" class="category-item">
+          <RouterLink :to="`/category/${cat.id}`" class="category-item">
             <span>{{ cat.name }}</span>
-            <span class="category-count">{{ cat.post_count }}</span>
           </RouterLink>
         </li>
       </ul>
@@ -65,9 +72,9 @@ const hotPosts = ref([
     <div class="sidebar-card">
       <h3 class="sidebar-title">标签</h3>
       <div class="tag-cloud">
-        <RouterLink v-for="tag in tags" :key="tag" :to="`/tag/${tag}`" class="tag">
+        <span v-for="tag in tags" :key="tag" class="tag">
           {{ tag }}
-        </RouterLink>
+        </span>
       </div>
     </div>
 

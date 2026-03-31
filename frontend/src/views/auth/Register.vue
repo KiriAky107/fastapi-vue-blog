@@ -32,7 +32,7 @@ async function handleRegister() {
     message.success('注册成功，请登录')
     router.push('/login')
   } catch (error: any) {
-    message.error(error.response?.data?.message || '注册失败')
+    message.error(error?.message || '注册失败')
   } finally {
     loading.value = false
   }

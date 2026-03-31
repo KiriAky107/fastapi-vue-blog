@@ -5,6 +5,7 @@ export interface User {
   email: string
   avatar?: string
   is_active: boolean
+  is_superuser: boolean
   created_at: string
   updated_at: string
 }

@@ -22,7 +22,7 @@ async function fetchPosts(categoryId?: string) {
       params.category_id = categoryId
     }
     const response = await postApi.getList(params)
-    posts.value = response.data.items.filter(p => p.status === 'published')
+    posts.value = response.data.items.filter((p: any) => p.status === 'published')
   } catch (error) {
     console.error('Failed to fetch posts:', error)
   } finally {

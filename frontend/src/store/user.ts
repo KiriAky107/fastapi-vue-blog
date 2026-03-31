@@ -10,7 +10,7 @@ export const useUserStore = defineStore('user', () => {
 
   // 计算属性
   const isLoggedIn = computed(() => !!token.value)
-  const isAdmin = computed(() => user.value?.is_active === true)
+  const isAdmin = computed(() => user.value?.is_superuser === true)
 
   // Actions
   function setToken(newToken: string | null) {

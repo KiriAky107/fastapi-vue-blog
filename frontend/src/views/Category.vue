@@ -23,7 +23,7 @@ async function fetchCategoryAndPosts() {
       // 全部分类页
       category.value = null
       const response = await postApi.getList({ page: 1, page_size: 20 })
-      posts.value = response.data.items.filter(p => p.status === 'published')
+      posts.value = response.data.items.filter((p: Post) => p.status === 'published')
     } else {
       // 特定分类
       const [catResponse, postsResponse] = await Promise.all([
@@ -31,7 +31,7 @@ async function fetchCategoryAndPosts() {
         postApi.getList({ category_id: categoryId, page: 1, page_size: 20 }),
       ])
       category.value = catResponse.data
-      posts.value = postsResponse.data.items.filter(p => p.status === 'published')
+      posts.value = postsResponse.data.items.filter((p: Post) => p.status === 'published')
     }
   } catch (error) {
     console.error('Failed to fetch category:', error)

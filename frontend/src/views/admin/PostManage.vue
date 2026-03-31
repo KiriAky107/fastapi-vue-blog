@@ -93,7 +93,7 @@ async function savePost() {
     closeEditor()
     fetchPosts()
   } catch (error: any) {
-    message.error(error.response?.data?.message || '保存失败')
+    message.error(error?.message || '保存失败')
   }
 }
 

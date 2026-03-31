@@ -1,12 +1,14 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import naive from 'naive-ui'
 import App from './App.vue'
 import router from './router'
-// import naive-ui (按需引入，后续按需配置)
+import './style.css'
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+app.use(naive)
 
 app.mount('#app')
