@@ -41,7 +41,14 @@ onMounted(() => {
   <div class="profile min-h-screen">
     <Navbar />
 
-    <main class="pt-24 px-4 pb-12 max-w-2xl mx-auto">
+    <!-- Hero Background -->
+    <section class="relative py-16 px-4 overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-blue-500/10"></div>
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-acg-pink/20 rounded-full blur-3xl"></div>
+    </section>
+
+    <!-- Profile Content -->
+    <main class="px-4 pb-12 max-w-2xl mx-auto -mt-20 relative z-10">
       <div class="glass rounded-xl p-6 md:p-8">
         <h1 class="text-2xl font-bold mb-6">个人中心</h1>
 
