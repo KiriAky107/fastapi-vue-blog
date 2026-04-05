@@ -3,14 +3,11 @@ import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { authApi } from '@/api/auth'
-import { useMessage, useDialog } from 'naive-ui'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
-const message = useMessage()
-const dialog = useDialog()
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('zh-CN', {
@@ -21,26 +18,20 @@ function formatDate(dateStr: string) {
 }
 
 async function handleLogout() {
-  try {
-    await dialog.warning({
-      title: '提示',
-      content: '确定要退出登录吗？',
-      positiveText: '确定',
-      negativeText: '取消',
-    })
-    await authApi.logout()
-  } catch {
-    // 用户取消
+  if (!confirm('确定要退出登录吗？')) {
     return
   }
+  try {
+    await authApi.logout()
+  } catch (error) {
+    // ignore
+  }
   userStore.logout()
-  message.success('已退出登录')
   router.push('/')
 }
 
 onMounted(() => {
   if (!userStore.isLoggedIn) {
-    message.warning('请先登录')
     router.push('/login')
   }
 })
@@ -64,7 +55,7 @@ onMounted(() => {
                 :alt="userStore.user.username"
                 class="w-full h-full object-cover"
               />
-              <span v-else class="text-3xl text-acg-pink">{{ userStore.user.username[0].toUpperCase() }}</span>
+              <span v-else class="text-3xl text-acg-pink">{{ userStore.user.username?.[0]?.toUpperCase() || 'U' }}</span>
             </div>
             <div>
               <h2 class="text-xl font-bold">{{ userStore.user.username }}</h2>

@@ -9,17 +9,17 @@ import { ref, onMounted, computed } from 'vue'
 import PostCard from '@/components/PostCard.vue'
 
 const route = useRoute()
-const categoryId = route.params.id as string
+const categoryId = computed(() => route.params.id as string | undefined)
 const category = ref<Category | null>(null)
 const posts = ref<Post[]>([])
 const loading = ref(false)
 
-const routePath = computed(() => route.path)
-
 async function fetchCategoryAndPosts() {
   loading.value = true
   try {
-    if (routePath.value === '/category') {
+    const id = categoryId.value
+
+    if (!id) {
       // 全部分类页
       category.value = null
       const response = await postApi.getList({ page: 1, page_size: 20 })
@@ -27,8 +27,8 @@ async function fetchCategoryAndPosts() {
     } else {
       // 特定分类
       const [catResponse, postsResponse] = await Promise.all([
-        categoryApi.getDetail(categoryId),
-        postApi.getList({ category_id: categoryId, page: 1, page_size: 20 }),
+        categoryApi.getDetail(id),
+        postApi.getList({ category_id: id, page: 1, page_size: 20 }),
       ])
       category.value = catResponse.data
       posts.value = postsResponse.data.items.filter((p: Post) => p.status === 'published')

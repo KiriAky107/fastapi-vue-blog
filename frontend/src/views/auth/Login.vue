@@ -2,28 +2,26 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/store/user'
-import { useMessage } from 'naive-ui'
 
 const router = useRouter()
 const userStore = useUserStore()
-const message = useMessage()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
 
 async function handleLogin() {
   if (!email.value || !password.value) {
-    message.warning('请填写邮箱和密码')
+    alert('请填写邮箱和密码')
     return
   }
 
   loading.value = true
   try {
     await userStore.login(email.value, password.value)
-    message.success('登录成功')
+    alert('登录成功')
     router.push('/')
   } catch (error: any) {
-    message.error(error?.message || '登录失败，请检查邮箱和密码')
+    alert(error?.message || '登录失败，请检查邮箱和密码')
   } finally {
     loading.value = false
   }

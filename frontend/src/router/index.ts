@@ -13,7 +13,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/PostDetail.vue'),
   },
   {
-    path: '/category/:id',
+    path: '/category/:id?',
     name: 'Category',
     component: () => import('@/views/Category.vue'),
   },

@@ -24,6 +24,7 @@ const isAdmin = computed(() => route.path.startsWith('/admin'))
       <div class="nav-links">
         <RouterLink to="/" class="nav-link" exact-active-class="active">首页</RouterLink>
         <RouterLink to="/category" class="nav-link" active-class="active">分类</RouterLink>
+        <RouterLink to="/archive" class="nav-link" active-class="active">归档</RouterLink>
         <RouterLink to="/about" class="nav-link" active-class="active">关于</RouterLink>
       </div>
 
