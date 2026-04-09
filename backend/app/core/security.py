@@ -2,15 +2,16 @@
 安全模块
 包含 JWT 令牌生成、验证和密码哈希功能
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 
 from app.core.config import settings
+from app.core.redis import redis_client
 
 
 # 密码上下文（使用 bcrypt）
@@ -34,9 +35,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     """创建访问令牌"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire, "type": "access"})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
@@ -47,17 +48,26 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
     """创建刷新令牌"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     to_encode.update({"exp": expire, "type": "refresh"})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
-def decode_token(token: str) -> dict:
-    """解码令牌"""
+async def decode_token(token: str) -> dict:
+    """解码令牌（异步版本）"""
+    # 检查 token 是否在黑名单
+    is_blacklisted = await redis_client.is_token_blacklisted(token)
+    if is_blacklisted:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
@@ -69,9 +79,39 @@ def decode_token(token: str) -> dict:
         )
 
 
+def decode_token_sync(token: str) -> dict:
+    """解码令牌（同步版本，用于中间件等场景）"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+async def revoke_token(token: str) -> None:
+    """撤销 token，将其加入黑名单"""
+    try:
+        # 解码 token 获取过期时间
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM], options={"verify_exp": False})
+        exp = payload.get("exp")
+        if exp:
+            # 计算剩余有效期
+            now = datetime.now(timezone.utc).timestamp()
+            remaining = int(exp - now)
+            if remaining > 0:
+                await redis_client.add_to_blacklist(token, remaining)
+    except JWTError:
+        # token 无效或已过期，忽略
+        pass
+
+
 async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
     """从令牌中获取当前用户 ID"""
-    payload = decode_token(token)
+    payload = await decode_token(token)
     user_id: str = payload.get("sub")
     if user_id is None:
         raise HTTPException(

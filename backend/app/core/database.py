@@ -2,6 +2,7 @@
 数据库模块
 Tortoise-ORM 初始化配置
 """
+from contextlib import asynccontextmanager
 from tortoise import Tortoise
 
 from app.core.config import settings
@@ -37,3 +38,15 @@ async def close_db():
     app_logger.info("Closing database connection...")
     await Tortoise.close_connections()
     app_logger.info("Database connection closed")
+
+
+@asynccontextmanager
+async def with_transaction():
+    """事务上下文管理器"""
+    connection = Tortoise.get_connection("default")
+    try:
+        async with connection.begin():
+            yield
+    except Exception:
+        await connection.rollback()
+        raise

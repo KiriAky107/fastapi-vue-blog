@@ -5,6 +5,7 @@ import { postApi } from '@/api/post'
 import type { Post, PostCreateRequest } from '@/types'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
+import MarkdownEditor from '@/components/MarkdownEditor.vue'
 
 const message = useMessage()
 const posts = ref<Post[]>([])
@@ -213,12 +214,10 @@ onMounted(() => {
 
             <div>
               <label class="block text-sm font-medium mb-2">内容 (Markdown)</label>
-              <textarea
+              <MarkdownEditor
                 v-model="formData.content"
                 placeholder="使用 Markdown 编写文章内容..."
-                rows="12"
-                class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 font-mono text-sm"
-              ></textarea>
+              />
             </div>
 
             <div>

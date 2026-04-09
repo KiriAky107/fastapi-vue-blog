@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { postApi } from '@/api/post'
-import type { Post } from '@/types'
+import { commentApi } from '@/api/comment'
+import type { Post, Comment } from '@/types'
 import { useMessage } from 'naive-ui'
 import Navbar from '@/components/Navbar.vue'
 import Footer from '@/components/Footer.vue'
+import CommentSection from '@/components/Comment.vue'
 
 const message = useMessage()
 
@@ -14,6 +16,8 @@ const router = useRouter()
 const postId = route.params.id as string
 const post = ref<Post | null>(null)
 const loading = ref(true)
+const comments = ref<Comment[]>([])
+const commentsLoading = ref(true)
 
 async function fetchPost() {
   loading.value = true
@@ -30,6 +34,18 @@ async function fetchPost() {
   }
 }
 
+async function fetchComments() {
+  commentsLoading.value = true
+  try {
+    const response = await commentApi.getByPost(postId)
+    comments.value = response.data.items
+  } catch (error) {
+    console.error('Failed to fetch comments:', error)
+  } finally {
+    commentsLoading.value = false
+  }
+}
+
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('zh-CN', {
     year: 'numeric',
@@ -40,6 +56,7 @@ function formatDate(dateStr: string) {
 
 onMounted(() => {
   fetchPost()
+  fetchComments()
 })
 </script>
 
@@ -76,6 +93,7 @@ onMounted(() => {
             <span>发布于 {{ formatDate(post.created_at) }}</span>
             <span v-if="post.category">{{ post.category.name }}</span>
             <span>阅读 {{ post.view_count }}</span>
+            <span>点赞 {{ post.like_count || 0 }}</span>
           </div>
 
           <!-- 标签 -->
@@ -93,6 +111,15 @@ onMounted(() => {
           <div class="prose prose-lg max-w-none dark:prose-invert" v-html="post.content"></div>
         </div>
       </article>
+
+      <!-- 评论区域 -->
+      <CommentSection
+        v-if="post"
+        :postId="postId"
+        :comments="comments"
+        :loading="commentsLoading"
+        @refresh="fetchComments"
+      />
     </main>
 
     <Footer />

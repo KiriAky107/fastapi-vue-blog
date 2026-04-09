@@ -7,8 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.database import init_db, close_db
+from app.core.redis import redis_client
 from app.core.logger import app_logger
 from app.api.api import api_router
+from app.api.middleware.rate_limit import RateLimitMiddleware
 
 
 @asynccontextmanager
@@ -20,10 +22,15 @@ async def lifespan(app: FastAPI):
     # 初始化数据库
     await init_db()
 
+    # 连接 Redis
+    await redis_client.connect()
+    app_logger.info("Redis connected")
+
     yield
 
     # 关闭时
     app_logger.info("Shutting down...")
+    await redis_client.close()
     await close_db()
 
 
@@ -46,6 +53,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # 添加限流中间件
+    app.add_middleware(RateLimitMiddleware)
 
     # 注册路由
     app.include_router(api_router)

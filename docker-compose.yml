@@ -17,6 +17,11 @@ services:
       - "5432:5432"
     networks:
       - acg_blog_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Redis 缓存
   redis:
@@ -29,6 +34,11 @@ services:
       - redis_data:/data
     networks:
       - acg_blog_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # 后端 API
   backend:
@@ -45,15 +55,23 @@ services:
       - DB_NAME=acg_blog
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - SECRET_KEY=your-secret-key-change-in-production
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY must be set}
       - DEBUG=false
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - acg_blog_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # 前端 Nginx
   frontend:

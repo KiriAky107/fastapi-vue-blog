@@ -2,6 +2,7 @@
 文章 API 接口
 """
 import math
+import re
 from typing import Optional
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from app.schemas.post import (
@@ -21,6 +22,8 @@ from app.crud.tag import tag_crud
 from app.crud.user import user_crud
 from app.core.security import get_current_user_id
 from app.core.logger import app_logger
+from app.api.dependencies.auth import require_admin, require_post_owner_or_admin
+from app.constants import PostStatus, MAX_TITLE_LENGTH, MAX_CONTENT_LENGTH
 
 router = APIRouter(prefix="/posts", tags=["文章"])
 category_router = APIRouter(prefix="/categories", tags=["分类"])
@@ -91,6 +94,20 @@ async def create_post(
     user_id: str = Depends(get_current_user_id)
 ):
     """创建文章"""
+    # 验证标题长度
+    if len(post_data.title) > MAX_TITLE_LENGTH:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"标题不能超过 {MAX_TITLE_LENGTH} 字符"
+        )
+
+    # 验证内容长度
+    if len(post_data.content) > MAX_CONTENT_LENGTH:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"内容不能超过 {MAX_CONTENT_LENGTH} 字符"
+        )
+
     # 检查 slug 是否已存在
     if await post_crud.get_by_slug(post_data.slug):
         raise HTTPException(
@@ -111,24 +128,22 @@ async def create_post(
 async def update_post(
     post_id: str,
     post_data: PostUpdate,
-    user_id: str = Depends(get_current_user_id)
+    _: dict = Depends(require_post_owner_or_admin)
 ):
     """更新文章"""
-    post = await post_crud.get_by_id(post_id)
-    if not post:
+    # 验证标题长度
+    if post_data.title and len(post_data.title) > MAX_TITLE_LENGTH:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="文章不存在"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"标题不能超过 {MAX_TITLE_LENGTH} 字符"
         )
 
-    # 检查权限
-    if str(post.author_id) != user_id:
-        is_admin = await user_crud.is_superuser(user_id)
-        if not is_admin:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="无权限修改此文章"
-            )
+    # 验证内容长度
+    if post_data.content and len(post_data.content) > MAX_CONTENT_LENGTH:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"内容不能超过 {MAX_CONTENT_LENGTH} 字符"
+        )
 
     updated_post = await post_crud.update(
         post_id,
@@ -142,9 +157,19 @@ async def update_post(
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_post(
     post_id: str,
-    user_id: str = Depends(get_current_user_id)
+    _: dict = Depends(require_post_owner_or_admin)
 ):
     """删除文章"""
+    await post_crud.delete(post_id)
+    app_logger.info(f"Post deleted: {post_id}")
+
+
+@router.post("/{post_id}/like", response_model=PostResponse)
+async def like_post(
+    post_id: str,
+    user_id: str = Depends(get_current_user_id)
+):
+    """点赞文章"""
     post = await post_crud.get_by_id(post_id)
     if not post:
         raise HTTPException(
@@ -152,17 +177,33 @@ async def delete_post(
             detail="文章不存在"
         )
 
-    # 检查权限
-    if str(post.author_id) != user_id:
-        is_admin = await user_crud.is_superuser(user_id)
-        if not is_admin:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="无权限删除此文章"
-            )
+    await post_crud.increment_like_count(post_id)
+    app_logger.info(f"Post liked: {post_id} by user {user_id}")
 
-    await post_crud.delete(post_id)
-    app_logger.info(f"Post deleted: {post_id}")
+    # 重新获取更新后的文章
+    return await post_crud.get_by_id(post_id)
+
+
+@router.get("/search", response_model=PostListResponse)
+async def search_posts(
+    q: str = Query(..., min_length=1, description="搜索关键词"),
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(10, ge=1, le=100, description="每页数量")
+):
+    """搜索文章"""
+    posts, total = await post_crud.search(
+        query=q,
+        page=page,
+        page_size=page_size
+    )
+
+    return PostListResponse(
+        items=posts,
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=math.ceil(total / page_size) if total > 0 else 0
+    )
 
 
 # ==================== 分类接口 ====================
